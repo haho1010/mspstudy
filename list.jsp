@@ -77,7 +77,7 @@ function search(){
 
 <label>검색조건 : </label>
 <select id="QueryType">
-	<option value="Keyword" selected>">제목+저자</option>
+	<option value="Keyword" selected>제목+저자</option>
 	<option value="Title">제목검색</option>
 	<option value="Author">저자검색</option>
 	<option value="Publisher">출판사검색</option>
@@ -86,7 +86,7 @@ function search(){
 
 <label>검색어 : </label>
 <input type="text" id="inKeyword"/>
-<button id="searchBtn" onClick="search();">검색</button>
+<button id="searchBtn" onClick="javascript:search();">검색</button>
 <br>
 <br>
 <table id="dataGrid"></table>
