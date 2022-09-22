@@ -33,6 +33,7 @@
         }
 
         function makeTable(id, array){
+            $("#dataGrid").jqGrid("GridUnload");
             $("#"+id).jqGrid({
                 data: array,
                 datatype: "local",
