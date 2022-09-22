@@ -56,6 +56,7 @@
             var seletedQueryType = $("#QueryType option:selected").val();
             var keyword = $("#inKeyword").val();
 
+
             $.ajax({
                 method: "get",
                 dataType: "jsonp",
@@ -76,7 +77,7 @@
 </head>
 <body>
 
-<label>검색 조건 : </label>
+<label>검색 조건 :  </label>
 <select id="QueryType">
 	<option value="Keyword" selected>제목+저자</option>
 	<option value="Title">제목검색</option>
