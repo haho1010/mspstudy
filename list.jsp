@@ -78,17 +78,21 @@
 </head>
 <body>
 
-<label>검색 조건 :  </label>
-<select id="QueryType">
-	<option value="Keyword" selected>제목+저자</option>
-	<option value="Title">제목검색</option>
-	<option value="Author">저자검색</option>
-	<option value="Publisher">출판사검색</option>
-</select>
-&nbsp;&nbsp;&nbsp;&nbsp;
-<label>검색어 : </label>
-<input type="text" id="inKeyword"/>
-<button id="searchBtn">검색</button>
+<p style="width:50%;font-size:25px;text-align:center">알라딘 도서 검색 화면</p>
+<fieldset style="width:973px">
+    <legend>검색 조건</legend>
+    <label>구분 : </label>
+    <select id="QueryType">
+        <option value="Keyword" selected>제목+저자</option>
+        <option value="Title">제목검색</option>
+        <option value="Author">저자검색</option>
+        <option value="Publisher">출판사검색</option>
+    </select>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <label>검색어 : </label>
+    <input type="text" id="inKeyword"/>
+    <button id="searchBtn">검색</button>
+</fieldset>
 <br>
 <br>
 <table id="dataGrid"></table>
