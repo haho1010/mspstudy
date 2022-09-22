@@ -1,184 +1,129 @@
+;(function($){
 /**
- * @license RequireJS i18n 2.0.6 Copyright (c) 2010-2012, The Dojo Foundation All Rights Reserved.
- * Available via the MIT or new BSD license.
- * see: http://github.com/requirejs/i18n for details
- */
-/*jslint regexp: true */
-/*global require: false, navigator: false, define: false */
-
-/**
- * This plugin handles i18n! prefixed modules. It does the following:
- *
- * 1) A regular module can have a dependency on an i18n bundle, but the regular
- * module does not want to specify what locale to load. So it just specifies
- * the top-level bundle, like 'i18n!nls/colors'.
- *
- * This plugin will load the i18n bundle at nls/colors, see that it is a root/master
- * bundle since it does not have a locale in its name. It will then try to find
- * the best match locale available in that master bundle, then request all the
- * locale pieces for that best match locale. For instance, if the locale is 'en-us',
- * then the plugin will ask for the 'en-us', 'en' and 'root' bundles to be loaded
- * (but only if they are specified on the master bundle).
- *
- * Once all the bundles for the locale pieces load, then it mixes in all those
- * locale pieces into each other, then finally sets the context.defined value
- * for the nls/colors bundle to be that mixed in locale.
- *
- * 2) A regular module specifies a specific locale to load. For instance,
- * i18n!nls/fr-fr/colors. In this case, the plugin needs to load the master bundle
- * first, at nls/colors, then figure out what the best match locale is for fr-fr,
- * since maybe only fr or just root is defined for that locale. Once that best
- * fit is found, all of its locale pieces need to have their bundles loaded.
- *
- * Once all the bundles for the locale pieces load, then it mixes in all those
- * locale pieces into each other, then finally sets the context.defined value
- * for the nls/fr-fr/colors bundle to be that mixed in locale.
- */
-(function () {
-    'use strict';
-
-    //regexp for reconstructing the master bundle name from parts of the regexp match
-    //nlsRegExp.exec('foo/bar/baz/nls/en-ca/foo') gives:
-    //['foo/bar/baz/nls/en-ca/foo', 'foo/bar/baz/nls/', '/', '/', 'en-ca', 'foo']
-    //nlsRegExp.exec('foo/bar/baz/nls/foo') gives:
-    //['foo/bar/baz/nls/foo', 'foo/bar/baz/nls/', '/', '/', 'foo', '']
-    //so, if match[5] is blank, it means this is the top bundle definition.
-    var nlsRegExp = /(^.*(^|\/)nls(\/|$))([^\/]*)\/?([^\/]*)/;
-
-    //Helper function to avoid repeating code. Lots of arguments in the
-    //desire to stay functional and support RequireJS contexts without having
-    //to know about the RequireJS contexts.
-    function addPart(locale, master, needed, toLoad, prefix, suffix) {
-        if (master[locale]) {
-            needed.push(locale);
-            if (master[locale] === true || master[locale] === 1) {
-                toLoad.push(prefix + locale + '/' + suffix);
-            }
-        }
-    }
-
-    function addIfExists(req, locale, toLoad, prefix, suffix) {
-        var fullName = prefix + locale + '/' + suffix;
-        if (require._fileExists(req.toUrl(fullName + '.js'))) {
-            toLoad.push(fullName);
-        }
-    }
-
-    /**
-     * Simple function to mix in properties from source into target,
-     * but only if target does not already have a property of the same name.
-     * This is not robust in IE for transferring methods that match
-     * Object.prototype names, but the uses of mixin here seem unlikely to
-     * trigger a problem related to that.
-     */
-    function mixin(target, source, force) {
-        var prop;
-        for (prop in source) {
-            if (source.hasOwnProperty(prop) && (!target.hasOwnProperty(prop) || force)) {
-                target[prop] = source[prop];
-            } else if (typeof source[prop] === 'object') {
-                if (!target[prop] && source[prop]) {
-                    target[prop] = {};
-                }
-                mixin(target[prop], source[prop], force);
-            }
-        }
-    }
-
-    define(['module'], function (module) {
-        var masterConfig = module.config ? module.config() : {};
-
-        return {
-            version: '2.0.6',
-            /**
-             * Called when a dependency needs to be loaded.
-             */
-            load: function (name, req, onLoad, config) {
-                config = config || {};
-
-                if (config.locale) {
-                    masterConfig.locale = config.locale;
-                }
-
-                var masterName,
-                    match = nlsRegExp.exec(name),
-                    prefix = match[1],
-                    locale = match[4],
-                    suffix = match[5],
-                    parts = locale.split('-'),
-                    toLoad = [],
-                    value = {},
-                    i, part, current = '';
-
-                //If match[5] is blank, it means this is the top bundle definition,
-                //so it does not have to be handled. Locale-specific requests
-                //will have a match[4] value but no match[5]
-                if (match[5]) {
-                    //locale-specific bundle
-                    prefix = match[1];
-                    masterName = prefix + suffix;
-                } else {
-                    //Top-level bundle.
-                    masterName = name;
-                    suffix = match[4];
-                    locale = masterConfig.locale;
-                    if (!locale) {
-                        locale = masterConfig.locale =
-                            typeof navigator === 'undefined' ? 'root' :
-                            ((navigator.languages && navigator.languages[0]) ||
-                             navigator.language ||
-                             navigator.userLanguage || 'root').toLowerCase();
-                    }
-                    parts = locale.split('-');
-                }
-
-                if (config.isBuild) {
-                    //Check for existence of all locale possible files and
-                    //require them if exist.
-                    toLoad.push(masterName);
-                    addIfExists(req, 'root', toLoad, prefix, suffix);
-                    for (i = 0; i < parts.length; i++) {
-                        part = parts[i];
-                        current += (current ? '-' : '') + part;
-                        addIfExists(req, current, toLoad, prefix, suffix);
-                    }
-
-                    req(toLoad, function () {
-                        onLoad();
-                    });
-                } else {
-                    //First, fetch the master bundle, it knows what locales are available.
-                    req([masterName], function (master) {
-                        //Figure out the best fit
-                        var needed = [],
-                            part;
-
-                        //Always allow for root, then do the rest of the locale parts.
-                        addPart('root', master, needed, toLoad, prefix, suffix);
-                        for (i = 0; i < parts.length; i++) {
-                            part = parts[i];
-                            current += (current ? '-' : '') + part;
-                            addPart(current, master, needed, toLoad, prefix, suffix);
-                        }
-
-                        //Load all the parts missing.
-                        req(toLoad, function () {
-                            var i, partBundle, part;
-                            for (i = needed.length - 1; i > -1 && needed[i]; i--) {
-                                part = needed[i];
-                                partBundle = master[part];
-                                if (partBundle === true || partBundle === 1) {
-                                    partBundle = req(prefix + part + '/' + suffix);
-                                }
-                                mixin(value, partBundle);
-                            }
-
-                            //All done, notify the loader.
-                            onLoad(value);
-                        });
-                    });
-                }
-            }
-        };
-    });
-}());
+ * jqGrid English Translation
+ * Tony Tomov tony@trirand.com
+ * http://trirand.com/blog/ 
+ * Dual licensed under the MIT and GPL licenses:
+ * http://www.opensource.org/licenses/mit-license.php
+ * http://www.gnu.org/licenses/gpl.html
+**/
+$.jgrid = $.jgrid || {};
+$.extend($.jgrid,{
+	defaults : {
+		recordtext: "보기 {0} - {1} / {2}",
+		emptyrecords: "표시할 행이 없습니다",
+		loadtext: "조회중...",
+		pgtext : "페이지 {0} / {1}"
+	},
+	search : {
+		caption: "검색...",
+		Find: "찾기",
+		Reset: "초기화",
+		odata : ['같다', '같지 않다', '작다', '작거나 같다','크다','크거나 같다', '로 시작한다','로 시작하지 않는다','내에 있다','내에 있지 않다','로 끝난다','로 끝나지 않는다','내에 존재한다','내에 존재하지 않는다'],
+		groupOps: [	{ op: "AND", text: "전부" },	{ op: "OR",  text: "임의" }	],
+		matchText: " 일치하다",
+		rulesText: " 적용하다"
+	},
+	edit : {
+		addCaption: "행 추가",
+		editCaption: "행 수정",
+		bSubmit: "전송",
+		bCancel: "취소",
+		bClose: "닫기",
+		saveData: "자료가 변경되었습니다! 저장하시겠습니까?",
+		bYes : "예",
+		bNo : "아니오",
+		bExit : "취소",
+		msg: {
+			required:"필수항목입니다",
+			number:"유효한 번호를 입력해 주세요",
+			minValue:"입력값은 크거나 같아야 합니다",
+			maxValue:"입력값은 작거나 같아야 합니다",
+			email: "유효하지 않은 이메일주소입니다",
+			integer: "유효한 숫자를 입력하세요",
+			date: "유효한 날짜를 입력하세요",
+			url: "은 유효하지 않은 URL입니다. 문장앞에 다음단어가 필요합니다('http://' or 'https://')",
+			nodefined : " 은 정의도지 않았습니다!",
+			novalue : " 반환값이 필요합니다!",
+			customarray : "사용자정의 함수는 배열을 반환해야 합니다!",
+			customfcheck : "Custom function should be present in case of custom checking!"
+			
+		}
+	},
+	view : {
+		caption: "행 조회",
+		bClose: "닫기"
+	},
+	del : {
+		caption: "삭제",
+		msg: "선택된 행을 삭제하시겠습니까?",
+		bSubmit: "삭제",
+		bCancel: "취소"
+	},
+	nav : {
+		edittext: "",
+		edittitle: "선택된 행 편집",
+		addtext:"",
+		addtitle: "행 삽입",
+		deltext: "",
+		deltitle: "선택된 행 삭제",
+		searchtext: "",
+		searchtitle: "행 찾기",
+		refreshtext: "",
+		refreshtitle: "그리드 갱신",
+		alertcap: "경고",
+		alerttext: "행을 선택하세요",
+		viewtext: "",
+		viewtitle: "선택된 행 조회"
+	},
+	col : {
+		caption: "열을 선택하세요",
+		bSubmit: "확인",
+		bCancel: "취소"
+	},
+	errors : {
+		errcap : "오류",
+		nourl : "설정된 url이 없습니다",
+		norecords: "처리할 행이 없습니다",
+		model : "colNames의 길이가 colModel과 일치하지 않습니다!"
+	},
+	formatter : {
+		integer : {thousandsSeparator: ",", defaultValue: '0'},
+		number : {decimalSeparator:".", thousandsSeparator: ",", decimalPlaces: 2, defaultValue: '0.00'},
+		currency : {decimalSeparator:".", thousandsSeparator: ",", decimalPlaces: 2, prefix: "", suffix:"", defaultValue: '0.00'},
+		date : {
+			dayNames:   [
+				"Sun", "Mon", "Tue", "Wed", "Thr", "Fri", "Sat",
+				"일", "월", "화", "수", "목", "금", "토"
+			],
+			monthNames: [
+				"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+				"1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"
+			],
+			AmPm : ["am","pm","AM","PM"],
+			S: function (j) {return j < 11 || j > 13 ? ['st', 'nd', 'rd', 'th'][Math.min((j - 1) % 10, 3)] : 'th'},
+			srcformat: 'Y-m-d',
+			newformat: 'm-d-Y',
+			masks : {
+				ISO8601Long:"Y-m-d H:i:s",
+				ISO8601Short:"Y-m-d",
+				ShortDate: "Y/j/n",
+				LongDate: "l, F d, Y",
+				FullDateTime: "l, F d, Y g:i:s A",
+				MonthDay: "F d",
+				ShortTime: "g:i A",
+				LongTime: "g:i:s A",
+				SortableDateTime: "Y-m-d\\TH:i:s",
+				UniversalSortableDateTime: "Y-m-d H:i:sO",
+				YearMonth: "F, Y"
+			},
+			reformatAfterEdit : false
+		},
+		baseLinkUrl: '',
+		showAction: '',
+		target: '',
+		checkbox : {disabled:true},
+		idName : 'id'
+	}
+});
+})(jQuery);

@@ -5,13 +5,13 @@
 <html>
 <head>
 	<meta charset="UTF-8">
-	<title>도서 검색 목록 페이지 입니다.</title>
-	<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
-	<link rel = "stylesheet" type = "text/css" media = "screen" href = "./css/ui.jqgrid.css"/>
-	<script type="text/javascript" src="./js/jquery-1.7.2.min.js"></script>
-	<script type="text/javascript" src = "./js/jquery.jqGrid.min.js"></script>
-	<script type="text/javascript" src = "./js/i18n/grid.locale-kr.js"></script>
-	<script type="text/javascript">
+	<title>도서검색 목록 페이지 입니다.</title>
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="${pageContext.request.contextPath}/css/ui.jqgrid.css"/>
+    <script type="text/javascript" src="${pageContext.request.contextPath}/js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="${pageContext.request.contextPath}/js/i18n/grid.locale-kr.js"></script>
+    <script type="text/javascript" src="${pageContext.request.contextPath}/js/jquery.jqGrid.min.js"></script>
+    <script type="text/javascript">
         $(document).ready(function(){
             $("#inKeyword").keyup(function(e) {
                 if (e.keyCode == 13) {
@@ -52,7 +52,7 @@
         }
 
         function search() {
-            $("#dataGrid").jqGrid("GridUnload");
+            //$("#dataGrid").jqGrid("GridUnload");
             var seletedQueryType = $("#QueryType option:selected").val();
             var keyword = $("#inKeyword").val();
 
@@ -73,7 +73,7 @@
             });
         }
 
-	</script>
+    </script>
 </head>
 <body>
 
