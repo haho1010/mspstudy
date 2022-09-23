@@ -22,6 +22,8 @@
             $("#searchBtn").on("click",function(){
                 search();
             });
+
+            $("#inKeyword").focus();
         });
 
         function aladinCallBack(success, data) {
