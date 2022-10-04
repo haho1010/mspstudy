@@ -8,7 +8,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>도서 검색 목록 페이지 입니다.</title>
-<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
 <link rel="stylesheet" type="text/css" media="screen" href="./css/ui.jqgrid.css"/>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 <style type="text/css">	
@@ -79,7 +79,7 @@ function search() {
 	$.ajax({
 		method: "get",
 		dataType: "jsonp",
-		url:"http://www.aladin.co.kr/ttb/api/ItemSearch.aspx",
+		url:"https://www.aladin.co.kr/ttb/api/ItemSearch.aspx",
 		data: {
 			Query: keyword,
 			TTBKey: "ttbminico821428001",
@@ -98,7 +98,7 @@ function init() {
     $.ajax({
         method: "get",
         dataType: "jsonp",
-        url:"http://www.aladin.co.kr/ttb/api/ItemSearch.aspx",
+        url:"https://www.aladin.co.kr/ttb/api/ItemSearch.aspx",
         data: {
             Query: keyword,
             TTBKey: "ttbminico821428001",
